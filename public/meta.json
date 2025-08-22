@@ -5,8 +5,8 @@
   "extraData": {
     "disabledPeriodicSync": false,
     "dataSourceConfigUiUri": "https://4f037149-92a1-4beb-9833-d38f60cf9950-00-3olderhlk9mlz.pike.replit.dev/",
-    "initHeight": 300,
-    "initWidth": 520
+    "initHeight": 600,
+    "initWidth": 720
   },
   "protocol": {
     "type": "http",
