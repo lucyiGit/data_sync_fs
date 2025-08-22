@@ -39,25 +39,68 @@ app.get("/meta.json", (req, res) => {
     );
 });
 
-app.post("/api/table_meta", (req, res) => {
-    console.log("table_meta的请求数据", req.body);
-    console.log("加密判断结果：", judgeEncryptSignValid(req));
-    const result = { code: 0, message: "POST请求成功", data: getTableMeta() };
-    res.status(200).json(result);
+app.post("/api/table_meta", async (req, res) => {
+    try {
+        const mongoParams = req.body;
+        console.log("table_meta的请求数据", mongoParams);
+        console.log("加密判断结果：", judgeEncryptSignValid(req));
+        // 从请求体中获取MongoDB连接参数
+        // 调用异步函数获取表格元数据
+        const tableMeta = await getTableMeta(mongoParams);
+        const result = { code: 0, message: "POST请求成功", data: tableMeta };
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("获取表格元数据失败:", error);
+        res.status(500).json({
+            code: 1,
+            message: "获取表格元数据失败: " + error.message,
+            data: null
+        });
+    }
 });
 
-app.post("/api/records", (req, res) => {
-    // Process a POST request
-    console.log("table_records 的请求数据", req.body);
-    console.log("加密判断结果：", judgeEncryptSignValid(req));
+// 添加JSON解析错误处理中间件
+app.use((err, req, res, next) => {
+    if (err instanceof SyntaxError && err.type === 'entity.parse.failed') {
+        console.error('JSON解析错误:', err);
+        return res.status(400).json({
+            code: 400,
+            message: '请求数据格式无效: ' + err.message,
+            data: null
+        });
+    }
+    next();
+});
 
-    // 进行处理，并返回结果
-    const result = {
-        code: 0,
-        message: "POST请求成功",
-        data: getTableRecords(),
-    };
-    res.status(200).json(result);
+app.post("/api/records", async (req, res) => {
+    try {
+        // 改进日志记录，只记录必要信息
+        console.log("table_records 请求头:", req.headers['content-type']);
+        const params = req.body;
+        console.log("table_records 请求体:", params);
+        console.log("加密判断结果：", judgeEncryptSignValid(req));
+
+        // 验证请求参数
+        if (!params || typeof params !== 'object') {
+            throw new Error('请求参数必须是非空对象');
+        }
+
+        // 调用异步函数获取表格记录
+        const tableRecords = await getTableRecords(params);
+        const result = {
+            code: 0,
+            message: "POST请求成功",
+            data: tableRecords,
+        };
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("获取表格记录失败:", error);
+        res.status(500).json({
+            code: 1,
+            message: "获取表格记录失败: " + error.message,
+            data: null
+        });
+    }
 });
 
 app.listen(3000, () => {
